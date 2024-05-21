@@ -13,6 +13,6 @@ makedocs(sitename="MrFOR_resources_init_fr.jl Documentation",
 # See "Hosting Documentation" and deploydocs() in the Documenter manual
 # for more information.
 deploydocs(
-    repo = "github.com/sylvaticus/MrFOR_resources_init_fr.jl.git",
+    repo = "github.com/ecoformod/MrFOR_resources_init_fr.jl.git",
     devbranch = "main"
 )
