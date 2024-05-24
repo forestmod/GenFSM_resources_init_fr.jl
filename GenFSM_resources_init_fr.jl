@@ -1,11 +1,11 @@
 
 """
-    MrFOR_resources_init_fr
+    GenFSM_resources_init_fr
 
 Here you are, you found an awesome package :-)
 
 """
-module MrFOR_resources_init_fr
+module GenFSM_resources_init_fr
 
 export data_path
 
@@ -29,4 +29,4 @@ include("getdata.jl")
 
 
 
-end # module MrFOR_resources_init_fr
+end # module GenFSM_resources_init_fr

@@ -1,7 +1,7 @@
-name = "MrFOR_resources_init_fr"
+name = "GenFSM_resources_init_fr"
 uuid = "78598d3f-d65b-4630-9136-a3bfe5c9de2f"
 authors = ["Antonello Lobianco <antonello@lobianco.org>"]
 version = "0.1.0"
 
 [deps]
-MrFOR_resources = "731fd045-8cb1-4036-8c04-a2a477f3265a"
+GenFSM_resources = "731fd045-8cb1-4036-8c04-a2a477f3265a"

@@ -1,20 +1,20 @@
-# The MrFOR_resources_init_fr Module
+# The GenFSM_resources_init_fr Module
 
 
 ```@docs
-MrFOR_resources_init_fr
+GenFSM_resources_init_fr
 ```
 
 ## Module Index
 
 ```@index
-Modules = [MrFOR_resources_init_fr]
+Modules = [GenFSM_resources_init_fr]
 Order   = [:constant, :type, :function, :macro]
 ```
 ## Detailed API
 
 ```@autodocs
-Modules = [MrFOR_resources_init_fr]
+Modules = [GenFSM_resources_init_fr]
 Order   = [:constant, :type, :function, :macro]
 ```
 

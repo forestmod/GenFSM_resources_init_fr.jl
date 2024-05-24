@@ -1,8 +1,8 @@
 using Documenter
-using MrFOR_resources_init_fr
+using GenFSM_resources_init_fr
 
 push!(LOAD_PATH,"../src/")
-makedocs(sitename="MrFOR_resources_init_fr.jl Documentation",
+makedocs(sitename="GenFSM_resources_init_fr.jl Documentation",
          pages = [
             "Index" => "index.md",
             "An other page" => "anotherPage.md",
@@ -13,6 +13,6 @@ makedocs(sitename="MrFOR_resources_init_fr.jl Documentation",
 # See "Hosting Documentation" and deploydocs() in the Documenter manual
 # for more information.
 deploydocs(
-    repo = "github.com/ecoformod/MrFOR_resources_init_fr.jl.git",
+    repo = "github.com/forestmod/GenFSM_resources_init_fr.jl.git",
     devbranch = "main"
 )
