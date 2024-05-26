@@ -22,7 +22,7 @@ export data_path
 #(X,Y) = 1,2 # Workaround for Rasters.jl bug https://github.com/rafaqz/DimensionalData.jl/issues/493
 # Note that the first dimension is X (the cols!) and second is Y (the row!), i.e. opposite of matrix ordering!
 
-#data_path   = joinpath(@__DIR__,"data")
+data_path   = joinpath(@__DIR__,"data")
 ENV["RASTERDATASOURCES_PATH"] = data_path
 #include("getdata.jl")
 
