@@ -1,4 +1,9 @@
 """
+    GenFSM_resources_init_fr
+
+Initializer for the France side of the resource module
+
+"""
 module GenFSM_resources_init_fr
 
 export data_path
