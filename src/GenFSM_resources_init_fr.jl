@@ -6,7 +6,7 @@ Initializer for the France side of the resource module
 """
 module GenFSM_resources_init_fr
 
-export data_path
+export data_path, init!
 
 #using Statistics, Random, Downloads # Standard Library (shipped with Julia)
 #using FTPClient
@@ -22,9 +22,13 @@ export data_path
 #(X,Y) = 1,2 # Workaround for Rasters.jl bug https://github.com/rafaqz/DimensionalData.jl/issues/493
 # Note that the first dimension is X (the cols!) and second is Y (the row!), i.e. opposite of matrix ordering!
 
-data_path   = joinpath(@__DIR__,"data")
-ENV["RASTERDATASOURCES_PATH"] = data_path
+#data_path   = joinpath(@__DIR__,"data")
+#ENV["RASTERDATASOURCES_PATH"] = data_path
 #include("getdata.jl")
+
+function init!(pixels,mask,settings,force_download,force_ml_computation)
+
+end
 
 
 
