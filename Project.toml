@@ -6,5 +6,5 @@ version = "0.1.0"
 [deps]
 GenFSM_resources = "731fd045-8cb1-4036-8c04-a2a477f3265a"
 
-[sources]
-GenFSM_resources = {url = "git@github.com:forestmod/GenFSM_resources.jl.git", rev = "main"}
+#[sources]
+#GenFSM_resources = {url = "git@github.com:forestmod/GenFSM_resources.jl.git", rev = "main"}

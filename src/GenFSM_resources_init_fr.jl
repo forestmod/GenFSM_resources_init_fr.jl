@@ -26,8 +26,24 @@ export data_path, init!
 #ENV["RASTERDATASOURCES_PATH"] = data_path
 #include("getdata.jl")
 
-function init!(pixels,mask,settings,force_download,force_ml_computation)
-
+function init!(pixels,mask,settings)
+    println("hello w")
+    #temp_ rel_temp_output
+    temp_path = joinpath(settings["temp_path"],"res","fr")
+    cache_path = joinpath(settings["cache_path"],"res","fr")
+    output_path = joinpath(settings["output_path"],"res","fr")
+    settings["res"]["fr"]["temp_path"] = temp_path
+    settings["res"]["fr"]["cache_path"] = cache_path
+    settings["res"]["fr"]["output_path"] = output_path
+    isdir(temp_path) || mkpath(temp_path)
+    isdir(cache_path) || mkpath(temp_path)
+    isdir(output_path) || mkpath(output_path)
+    # Download the data:
+    #- administrative for the region
+    #- soil 
+    #- altimetry DTM
+    #- corine land cover
+    #- IGN
 end
 
 
