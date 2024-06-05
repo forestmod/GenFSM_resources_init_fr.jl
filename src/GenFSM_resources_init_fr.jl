@@ -6,7 +6,15 @@ Initializer for the France side of the resource module
 """
 module GenFSM_resources_init_fr
 
-export data_path, init!
+import Downloads 
+import ArchGDAL, Rasters, ZipFile, DataStructures, FTPClient
+import Geomorphometry # for slope and aspect 
+
+#using FTPClient, ZipFile, DataStructures #, RasterDataSources
+
+export data_path, init!!
+
+include("Utils.jl")
 
 #using Statistics, Random, Downloads # Standard Library (shipped with Julia)
 #using FTPClient
@@ -24,11 +32,12 @@ export data_path, init!
 
 #data_path   = joinpath(@__DIR__,"data")
 #ENV["RASTERDATASOURCES_PATH"] = data_path
-#include("getdata.jl")
 
-function init!(pixels,mask,settings)
-    println("hello w")
-    #temp_ rel_temp_output
+#ENV["RASTERDATASOURCES_PATH"] = "/home/lobianco/CloudFiles/beta-lorraine-sync/MrFOR/dev_GenFSM/cache/res/fr"
+
+include("Get_data.jl")
+
+function init!!(pixels,settings,mask)
     temp_path = joinpath(settings["temp_path"],"res","fr")
     cache_path = joinpath(settings["cache_path"],"res","fr")
     output_path = joinpath(settings["output_path"],"res","fr")
@@ -38,6 +47,10 @@ function init!(pixels,mask,settings)
     isdir(temp_path) || mkpath(temp_path)
     isdir(cache_path) || mkpath(temp_path)
     isdir(output_path) || mkpath(output_path)
+
+    get_data!(settings,mask)
+    println(settings)
+    
     # Download the data:
     #- administrative for the region
     #- soil 
@@ -45,6 +58,11 @@ function init!(pixels,mask,settings)
     #- corine land cover
     #- IGN
 end
+
+
+
+
+
 
 
 
