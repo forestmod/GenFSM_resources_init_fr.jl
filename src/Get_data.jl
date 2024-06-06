@@ -13,37 +13,69 @@ end
 
 # ------------------------------------------------------------------------------
 # Specific download functions
+"""
+   get_dtm(settings,mask)
 
+Download and resample to mask dtm and related variables (slope, aspect, 
+Terrain Ruggedness Index)
+
+"""
 function get_dtm(settings,mask)
-    data_path = joinpath(settings["res"]["fr"]["cache_path"],"dtm")
+    data_path        = joinpath(settings["res"]["fr"]["cache_path"],"dtm")
     isdir(data_path) || mkpath(data_path)
-    force     = "dtm" in settings["res"]["fr"]["force_download"]
-    url       = settings["res"]["fr"]["data_sources"]["dtm_url"]
-    to        = mask
-    filename  = basename(url)
-    verbosity = settings["verbosity"]
-    verbose   = verbosity in ["HIGH", "FULL"] 
-    zip_destpath = joinpath(data_path,filename)
-    tif_destpath    = replace(zip_destpath,".zip" => ".tif")
+    force            = "dtm" in settings["res"]["fr"]["force_download"]
+    url              = settings["res"]["fr"]["data_sources"]["dtm_url"]
+    to               = mask
+    filename         = basename(url)
+    verbosity        = settings["verbosity"]
+    verbose          = verbosity in ["HIGH", "FULL"] 
+    zip_destpath     = joinpath(data_path,filename)
+    tif_destpath     = replace(zip_destpath,".zip" => ".tif")
     tif_destpath_reg = replace(tif_destpath,".tif" => "_reg.tif")
-    dtm_var   = DataStructures.OrderedDict("dtm"=>tif_destpath_reg)
+    slope_destpath   = joinpath(data_path,"slope.tif")
+    aspect_destpath  = joinpath(data_path,"aspect.tif")
+    tri_destpath     = joinpath(data_path,"tri.tif")
+    dtm_var          = DataStructures.OrderedDict(
+        "dtm"=>tif_destpath_reg,
+        "slope"=>slope_destpath,
+        "aspect"=>aspect_destpath,
+        "tri"=>tri_destpath,
+        )
     if ( isfile(tif_destpath) && (!force))
         return dtm_var
     end
     verbose && @info "Downloading dtm file..."
     Downloads.download(url,zip_destpath, verbose=verbose)
-    unzip(zip_destpath,data_path)
-    dtm_w   = Rasters.Raster(tif_destpath)
-    dtm_w   = Rasters.crop(rnge; to=to)
-
-    dtm_reg = Rasters.resample(dtm_w,to=to,method=:average)
+    RFR.unzip(zip_destpath,data_path)
+    sr            = settings["simulation_region"]
+    crs           = convert(Rasters.WellKnownText, Rasters.EPSG(sr["cres_epsg_id"]))
+    lon, lat      = Rasters.X(sr["x_lb"]:(sr["xres"]/4):sr["x_ub"]), Rasters.Y(sr["y_lb"]:(rs["yres"]/4):sr["y_ub"])
+    mask_hr       = Rasters.Raster(zeros(Float32,lon,lat),crs=crs)
+    mask_hr       = Rasters.reverse(mask_hr;dims=Rasters.Y )
+    dtm_w         = Rasters.Raster(tif_destpath)
+    dtm_reg_hr    = Rasters.resample(dtm_w,to=mask_hr,method=:average)
+    dtm_reg       = Rasters.resample(dtm_w,to=to,method=:average)
+    M             = convert(Matrix{Float32},dtm_reg_hr[:,:])
+    slope         = Geomorphometry.slope(M)
+    aspect        = Geomorphometry.aspect(M)
+    tri           = Geomorphometry.TRI(M)
+    slope_r       = similar(mask_hr)
+    aspect_r      = similar(mask_hr)
+    tri_r         = similar(mask_hr)
+    slope_r[:,:]  = slope
+    aspect_r[:,:] = aspect
+    tri_r[:,:]    = tri
+    slope_r_lr    = Rasters.resample(slope_r,to=to,method=:average)
+    aspect_r_lr   = Rasters.resample(aspect_r,to=to,method=:average)
+    tri_r_lr      = Rasters.resample(tri_r,to=to,method=:average)
     write(tif_destpath_reg, dtm_reg,force=true)
+    write(slope_destpath, slope_r_lr,force=true)
+    write(aspect_destpath, aspect_r_lr,force=true)
+    write(tri_destpath, tri_r_lr,force=true)
     rm(zip_destpath)
     #rm(tif_destpath_reg)
     return dtm_var
 end
-
-
 
 function get_soil_data(settings,mask)
     #=
