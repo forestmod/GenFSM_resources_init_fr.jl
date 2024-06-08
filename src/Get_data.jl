@@ -8,11 +8,51 @@ function get_data!(settings,mask)
     input_rasters = Dict{Any,Any}()
     input_rasters = merge(input_rasters,get_dtm(settings,mask))
     input_rasters = merge(input_rasters,get_soil_data(settings,mask))
-    settings["res"]["fr"]["input_rasters"] = input_rasters 
+    input_rasters = merge(input_rasters,get_clc(settings,mask))
+    settings["res"]["fr"]["input_rasters"] = input_rasters
 end
 
 # ------------------------------------------------------------------------------
 # Specific download functions
+
+function get_mask(settings,mask)
+    force          = "adm_borders" in settings["res"]["fr"]["force_download"]
+    verbosity      = settings["verbosity"]
+    verbose        = verbosity in ["HIGH", "FULL"] 
+    admin_borders_input_crs = settings["res"]["fr"]["data_sources"]["admin_borders_input_crs"]
+
+    adm_borders_path      = joinpath(settings["res"]["fr"]["cache_path"],"adm_borders")
+    isdir(adm_borders_path) || mkpath(adm_borders_path)
+    adm_borders_dl_path   = joinpath(adm_borders_path,"downloaded")
+    isdir(adm_borders_dl_path) || mkpath(adm_borders_dl_path)
+
+    mask_destpath         = joinpath(adm_borders_path,"mask.tif")
+
+    (isfile(mask_destpath) && (!force)) && return mask_destpath
+
+    for f in settings["res"]["fr"]["data_sources"]["admin_borders_sources"]
+        fname     = basename(split(f,"?")[1])
+        dest_name = joinpath(adm_borders_dl_path,fname)
+        Downloads.download(f,dest_name, verbose=verbose)
+    end
+    dir_files = readdir(adm_borders_dl_path)
+    shp_file = dir_files[findfirst(x->match(r".*\.shp$", x) !== nothing, dir_files)]
+
+    reg_borders = Shapefile.Handle(joinpath(adm_borders_dl_path,shp_file)).shapes
+
+    reg_raster = Rasters.rasterize(last, reg_borders; res=0.01, missingval=0, fill=1, progress=true)
+    shp_crs           = convert(Rasters.WellKnownText, Rasters.EPSG(admin_borders_input_crs))
+    reg_raster = Rasters.setcrs(reg_raster, shp_crs)
+    reg_raster  = Rasters.reverse(reg_raster;dims=Rasters.Y )
+    #Rasters.metadata(reg_raster)["missed_geometries"]
+
+    resampled_raster = Rasters.resample(reg_raster,to=mask,method=:average)
+    write(mask_destpath, resampled_raster ,force=true)
+    rm(adm_borders_dl_path,recursive=true)
+    return mask_destpath
+end
+
+
 """
    get_dtm(settings,mask)
 
@@ -41,15 +81,15 @@ function get_dtm(settings,mask)
         "aspect"=>aspect_destpath,
         "tri"=>tri_destpath,
         )
-    if ( isfile(tif_destpath) && (!force))
+    if ( isfile(tif_destpath_reg) && (!force))
         return dtm_var
     end
     verbose && @info "Downloading dtm file..."
     Downloads.download(url,zip_destpath, verbose=verbose)
-    RFR.unzip(zip_destpath,data_path)
+    unzip(zip_destpath,data_path)
     sr            = settings["simulation_region"]
     crs           = convert(Rasters.WellKnownText, Rasters.EPSG(sr["cres_epsg_id"]))
-    lon, lat      = Rasters.X(sr["x_lb"]:(sr["xres"]/4):sr["x_ub"]), Rasters.Y(sr["y_lb"]:(rs["yres"]/4):sr["y_ub"])
+    lon, lat      = Rasters.X(sr["x_lb"]:(sr["xres"]/4):sr["x_ub"]), Rasters.Y(sr["y_lb"]:(sr["yres"]/4):sr["y_ub"])
     mask_hr       = Rasters.Raster(zeros(Float32,lon,lat),crs=crs)
     mask_hr       = Rasters.reverse(mask_hr;dims=Rasters.Y )
     dtm_w         = Rasters.Raster(tif_destpath)
@@ -73,7 +113,7 @@ function get_dtm(settings,mask)
     write(aspect_destpath, aspect_r_lr,force=true)
     write(tri_destpath, tri_r_lr,force=true)
     rm(zip_destpath)
-    #rm(tif_destpath_reg)
+    rm(tif_destpath)
     return dtm_var
 end
 
@@ -147,7 +187,6 @@ function get_soil_data(settings,mask)
     delete!(soil_vars,"TextureUSDA")
     soil_vars = DataStructures.OrderedDict(soil_vars..., texture_classes...)
 
-
     # Other soil variables
     urlname   = soil_oth_url
     zipname   = joinpath(soil_path,basename(urlname))
@@ -172,47 +211,37 @@ function get_soil_data(settings,mask)
     return soil_vars
 end
 
-
-function get_ecoregions_data(data_path;force=false,verbose=false,to=nothing)
-    # landing page: https://www.eea.europa.eu/en/datahub/datahubitem-view/c8c4144a-8c0e-4686-9422-80dbf86bc0cb?activeAccordion=
-    #force   = false
-    #verbose = true
-    #to      = nothing
-    #to      = Yraster
-
-    subpath     = joinpath(data_path,"ecoregions")
-    classes     = collect([1:9;11:13]) # classes 10, 14 and 15 are out of the study area
-    urlname     = "https://sdi.eea.europa.eu/datashare/s/sTnNeQK69iYNgCe/download"
-    dataname    = "eea_r_3035_1_km_env-zones_p_2018_v01_r00"
-    zippath     = joinpath(subpath,"$(dataname).zip")
-    zipfolder   = joinpath(subpath,dataname)
-    tifname     = joinpath(zipfolder,"$(dataname).tif")
-    tifname_1km = joinpath(zipfolder,"ecoregions_1km.tif")
-    tifname_8km = joinpath(zipfolder,"ecoregions_8km.tif")
-    (ispath(zipfolder) && !force ) && return Dict("ecoregions" => tifname_8km)  #expand_classes(tifname_1km,classes;verbosity=verbose,force=false,to=to)
-
-    Downloads.download(urlname,zippath, verbose=verbose)
-    rm(zipfolder, force=true,recursive=true)
-    unzip(zippath,subpath) # the zip archive contain itself the folder with the data inside
-    rm(zippath)
-
-    # before the extraction of the classes we get the base raster res from 100m to 1km 
-    base_raster = Raster(tifname)
-    base_raster_1km = resample(base_raster, res=1000)
-    base_raster_8km = resample(base_raster_1km, to=to, method=:mode)
-    write(tifname_8km, base_raster_8km, force=true)
-    return Dict("ecoregions" => tifname_8km)
-
-    #=
-    #base_raster_1km_Float32 = Float32.(base_raster_1km)
-    # replacing 0 as missing value to 99, as we need 0 as a value !
-    missval       = missingval(base_raster_1km) 
-    base_raster_1km = map(x-> ( (x == missval) ? UInt8(99) : x), base_raster_1km)
-    base_raster_1km = rebuild(base_raster_1km; missingval=UInt8(99))
-    write(tifname_1km, base_raster_1km, force=true)
-
-    ecoregions_classes = expand_classes(tifname_1km,classes;verbosity=2,force=force,to=to)
-
-    return ecoregions_classes
-    =#
+function get_clc(settings,mask)
+    clc_dirpath   = joinpath(settings["res"]["fr"]["cache_path"],"clc")
+    clc_dldirpath = joinpath(settings["res"]["fr"]["temp_path"],"clc")
+    clc_dlpath    = joinpath(clc_dldirpath,"clc.gpkg")
+    clc_bfor_path = joinpath(clc_dirpath,"clc_bfor.tif")
+    clc_cfor_path = joinpath(clc_dirpath,"clc_cfor.tif")
+    clc_mfor_path = joinpath(clc_dirpath,"clc_mfor.tif")
+    clc_vars = Dict(
+        "clc_bfor" => clc_bfor_path,
+        "clc_cfor" => clc_cfor_path,
+        "clc_mfor" => clc_mfor_path,
+    )
+    clc_url = settings["res"]["fr"]["data_sources"]["clc_url"]
+    force          = "clc" in settings["res"]["fr"]["force_download"]
+    (isdir(clc_dirpath) && (!force) ) && return clc_vars
+    isdir(clc_dirpath) || mkpath(clc_dirpath)
+    isdir(clc_dldirpath) || mkpath(clc_dldirpath)
+    Downloads.download(clc_url,clc_dlpath)
+    clc_df  = GeoDataFrames.read(clc_dlpath)
+    DataFrames.rename!(clc_df,"Shape" => "geometry")
+    clc_bfor = clc_df[clc_df.Code_18 .== "311",:]
+    clc_cfor = clc_df[clc_df.Code_18 .== "312",:]
+    clc_mfor = clc_df[clc_df.Code_18 .== "313",:]
+    Logging.with_logger(Logging.NullLogger()) do
+        clc_bfor_share = Rasters.coverage(clc_bfor; to=mask)
+        clc_cfor_share = Rasters.coverage(clc_cfor; to=mask)
+        clc_mfor_share = Rasters.coverage(clc_mfor; to=mask)
+        write(clc_bfor_path, clc_bfor_share ,force=true)
+        write(clc_cfor_path, clc_cfor_share ,force=true)
+        write(clc_mfor_path, clc_mfor_share ,force=true)
+    end
+    rm(clc_dldirpath, recursive=true)
+    return clc_vars
 end

@@ -9,6 +9,7 @@ module GenFSM_resources_init_fr
 import Downloads 
 import ArchGDAL, Rasters, ZipFile, DataStructures, FTPClient
 import Geomorphometry # for slope and aspect 
+import Shapefile
 
 #using FTPClient, ZipFile, DataStructures #, RasterDataSources
 
@@ -37,7 +38,7 @@ include("Utils.jl")
 
 include("Get_data.jl")
 
-function init!!(pixels,settings,mask)
+function init!!(pixels,settings,overal_region_mask)
     temp_path = joinpath(settings["temp_path"],"res","fr")
     cache_path = joinpath(settings["cache_path"],"res","fr")
     output_path = joinpath(settings["output_path"],"res","fr")
@@ -47,16 +48,20 @@ function init!!(pixels,settings,mask)
     isdir(temp_path) || mkpath(temp_path)
     isdir(cache_path) || mkpath(temp_path)
     isdir(output_path) || mkpath(output_path)
+    settings["res"]["fr"]["mask"] = get_mask(settings,overal_region_mask)
+    mask = Rasters.Raster(settings["res"]["fr"]["mask"])
 
     get_data!(settings,mask)
     println(settings)
     
     # Download the data:
-    #- administrative for the region
-    #- soil 
-    #- altimetry DTM
-    #- corine land cover
+    #- DONE administrative for the region
+    #- DONE soil 
+    #- DONE altimetry DTM
+    #- Corine land cover
     #- IGN
+    #- Climate
+
 end
 
 
