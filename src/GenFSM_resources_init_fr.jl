@@ -7,9 +7,11 @@ Initializer for the France side of the resource module
 module GenFSM_resources_init_fr
 
 import Downloads 
-import ArchGDAL, Rasters, ZipFile, DataStructures, FTPClient
+import ArchGDAL, Rasters, ZipFile, DataStructures # , FTPClient
 import Geomorphometry # for slope and aspect 
 import Shapefile
+import CSV, DataFrames
+import Proj # to convert the (X,Y) coordinates of the inventory points
 
 #using FTPClient, ZipFile, DataStructures #, RasterDataSources
 

@@ -245,3 +245,50 @@ function get_clc(settings,mask)
     rm(clc_dldirpath, recursive=true)
     return clc_vars
 end
+
+"""
+   get_inventory_data(settings,mask)
+
+Download the forest inventory data and change the (X,Y) coordinated of the points to the CRS used in the model.
+Returns a dicionary with the file paths (no further elaborated, still in csv format)   
+"""
+function get_inventory_data(settings,mask)
+    forinv_url       = settings["res"]["fr"]["data_sources"]["forest_inventory_url"]
+    force            = "forinv" in settings["res"]["fr"]["force_download"]
+    forest_inventory_crs = settings["res"]["fr"]["data_sources"]["forest_inventory_cres_epsg_id"]
+    forinv_dirpath   = joinpath(settings["res"]["fr"]["cache_path"],"forinv")
+    forinv_dldirpath = joinpath(settings["res"]["fr"]["temp_path"],"forinv")
+    forinv_dlpath    = joinpath(forinv_dldirpath,basename(forinv_url))
+    forinv_unzippeddir = joinpath(forinv_dldirpath,"data")
+    forinv_data = Dict(
+        "points"          => joinpath(forinv_dirpath,"PLACETTE.csv"),
+        "trees"           =>  joinpath(forinv_dirpath,"ARBRE.csv"),
+        "death_trees"     =>  joinpath(forinv_dirpath,"BOIS_MORT.csv"),
+        "tree_cover"      =>  joinpath(forinv_dirpath,"COUVERT.csv"),
+        "points_toposoil" =>  joinpath(forinv_dirpath,"ECOLOGIE.csv"),
+        "species"         =>  joinpath(forinv_dirpath,"FLORE.csv"),
+        "habitat"         =>  joinpath(forinv_dirpath,"HABITAT.csv"),
+    )
+    forinv_meta = Dict(
+        "species_latin_name"        => joinpath(forinv_dirpath,"espar-cdref13.csv"),
+        "vars_availability_by_year" => joinpath(forinv_dirpath,"summary_data.csv"), # recapitulatif_donnees.csv is the French version
+        "metadata"                  => joinpath(forinv_dirpath,"metadata.csv"), # metadonnees.csv is the French version    
+    )
+    forinv_vars = Dict("data" => forinv_data, "meta"=>forinv_meta)
+    (isdir(forinv_dirpath) && (!force) ) && return forinv_vars
+    isdir(forinv_dirpath) || mkpath(forinv_dirpath)
+    isdir(forinv_dldirpath) || mkpath(forinv_dldirpath)
+    Downloads.download(forinv_url,forinv_dlpath)
+    unzip(forinv_dlpath,forinv_unzippeddir)
+    mv(forinv_unzippeddir,forinv_dirpath,force=true)
+    points = CSV.read(forinv_data["points"],DataFrames.DataFrame)
+    trans = Proj.Transformation("EPSG:$(forest_inventory_crs)", "EPSG:$(settings["simulation_region"]["cres_epsg_id"])", always_xy=true)   
+    for p in eachrow(points)
+      (X,Y) = trans(p.XL,p.YL)
+      p.XL = X
+      p.YL = Y
+    end
+    CSV.write(forinv_data["points"],points)
+    rm(forinv_dldirpath,recursive=true)
+    return forinv_vars
+end

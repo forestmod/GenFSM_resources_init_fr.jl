@@ -35,6 +35,7 @@ function unzip(file,exdir="")
     close(zarchive)
 end
 
+#=
 # Modified to get the info if it is a directory and to list info on any directories, not only current one
 function FTP_readdir(ftp::FTPClient.FTP,dir=pwd(ftp);details=false)
     resp = nothing
@@ -62,6 +63,7 @@ function FTP_readdir(ftp::FTPClient.FTP,dir=pwd(ftp);details=false)
         return names
     end
 end
+
 
 function download_dir(ftp,dir="";as="",verbosity=0, recursive=true, force=false, dryrun=false, mode=binary_mode, exclude=[], ftp_basepath="",dest_basepath="" ) # latest two used for recursion only
     (dir == "")  && (dir = pwd(ftp))
@@ -113,6 +115,7 @@ function download_dir(ftp,dir="";as="",verbosity=0, recursive=true, force=false,
         end
     end
 end
+=#
 
 function expand_classes(input_filename,classes;verbose=false,force=false,to=nothing,writefile=true)
     out_dir   = joinpath(dirname(input_filename),"classes")
