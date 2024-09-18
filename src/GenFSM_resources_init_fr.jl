@@ -41,6 +41,10 @@ include("Utils.jl")
 include("Get_data.jl")
 
 function init!!(pixels,settings,overal_region_mask)
+    #println(settings["temp_path"])
+    println("hello ddddc")
+    return(settings)
+    println(settings["temp_path"])
     temp_path = joinpath(settings["temp_path"],"res","fr")
     cache_path = joinpath(settings["cache_path"],"res","fr")
     output_path = joinpath(settings["output_path"],"res","fr")
@@ -60,9 +64,9 @@ function init!!(pixels,settings,overal_region_mask)
     #- DONE administrative for the region
     #- DONE soil 
     #- DONE altimetry DTM
-    #- Corine land cover
-    #- IGN
-    #- Climate
+    #- DONE Corine land cover
+    #- DONE (no elaboration) to check IGN
+    #- TODO Climate, accessibility index
 
 end
 

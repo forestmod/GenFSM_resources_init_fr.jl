@@ -10,6 +10,10 @@ function get_data!(settings,mask)
     input_rasters = merge(input_rasters,get_soil_data(settings,mask))
     input_rasters = merge(input_rasters,get_clc(settings,mask))
     settings["res"]["fr"]["input_rasters"] = input_rasters
+    inv_data = get_inventory_data(settings,mask)
+    println(inv_data)
+    println("done get_data!")
+
 end
 
 # ------------------------------------------------------------------------------
@@ -261,7 +265,7 @@ function get_inventory_data(settings,mask)
     forinv_dlpath    = joinpath(forinv_dldirpath,basename(forinv_url))
     forinv_unzippeddir = joinpath(forinv_dldirpath,"data")
     forinv_data = Dict(
-        "points"          => joinpath(forinv_dirpath,"PLACETTE.csv"),
+        "points"          =>  joinpath(forinv_dirpath,"PLACETTE.csv"),
         "trees"           =>  joinpath(forinv_dirpath,"ARBRE.csv"),
         "death_trees"     =>  joinpath(forinv_dirpath,"BOIS_MORT.csv"),
         "tree_cover"      =>  joinpath(forinv_dirpath,"COUVERT.csv"),
