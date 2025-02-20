@@ -1,6 +1,15 @@
 # GenFSM_resources_init_fr
 Initialisation package of the resource module of GenFSM specific for France
 
+
+**DEPRECATED, DON'T USE**
+
+Use GenFSM instead:
+
+https://github.com/forestmod/GenFSM.jl
+
+
+
 For timber Volumes, we'll be using the National Inventory row data.
 
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://forestmod.github.io/GenFSM_resources_init_fr.jl/stable)
